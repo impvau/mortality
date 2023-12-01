@@ -1,0 +1,6 @@
+{ 
+    "files.associations": {
+        "*.rmd": "rmarkdown",
+        "*.Rmd": "rmd"
+    }
+}

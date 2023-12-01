@@ -1,0 +1,15 @@
+
+{
+    "name": "Python Container",
+    "dockerFile": "Dockerfile",
+    "forwardPorts": [8787], 
+    "customizations": {
+            "vscode": {
+                    "extensions": [
+                        "REditorSupport.r",
+                        "RDebugger.r-debugger",
+                        "Mikhail-Arkhipov.r"
+                    ]
+            }
+    }
+}
