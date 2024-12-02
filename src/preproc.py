@@ -2,13 +2,11 @@ import pandas as pd
 
 # Define file paths
 file_paths = [
-    "data/Japan_National_smooth_male.csv",
-    # "data/Japan_National_smooth_female.csv"
+    ["data/Japan_National_smooth_male.csv", "data/jp_male_sm_t", "data/jp_male_sm_Te"],
+    ["data/Japan_National_smooth_female.csv", "data/jp_female_sm_t", "data/jp_female_sm_Te"],
+    ["data/Japan_National_male.csv", "data/jp_male_t", "data/jp_male_Te"],
+    ["data/Japan_National_female.csv", "data/jp_female_t", "data/jp_female_Te"]
 ]
-
-# Base output file names
-output_train_base = "data/jp_male_sm_t"
-output_test_base = "data/jp_male_sm_Te"
 
 # Year ranges
 initial_train_start = 1973
@@ -20,8 +18,11 @@ shifts = 10
 # Loop through the files
 for file_path in file_paths:
     try:
-        df = pd.read_csv(file_path)
-        print(f"Processing file: {file_path}")
+        df = pd.read_csv(file_path[0])
+        print(f"Processing file: {file_path[0]}")
+
+        output_train_base = file_path[1]
+        output_test_base = file_path[2]
 
         # Extract numeric age from the first column
         df['age'] = df.iloc[:, 0].str.extract(r'A(\d+)').astype(int)
