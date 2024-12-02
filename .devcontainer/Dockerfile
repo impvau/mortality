@@ -1,5 +1,6 @@
 
-FROM ubuntu:latest
+#FROM ubuntu:latest
+FROM nvidia/cuda:12.0.1-devel-ubuntu22.04
 
 ENV DEBIAN_FRONTEND noninteractive
 
