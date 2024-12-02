@@ -13,10 +13,17 @@
             "file": "${workspaceFolder}/src/compute_cfr.R"
         },
         {
+            "name": "Run",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/run.py",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Split Datasets",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/preproc.py",
+            "program": "${workspaceFolder}/src/preproc.py",
             "console": "integratedTerminal"
         }
     ]
