@@ -11,6 +11,13 @@
             "debugMode": "file",
             "workingDirectory": "${workspaceFolder}",
             "file": "${workspaceFolder}/src/compute_cfr.R"
+        },
+        {
+            "name": "Split Datasets",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/preproc.py",
+            "console": "integratedTerminal"
         }
     ]
 }
