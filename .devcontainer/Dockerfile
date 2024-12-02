@@ -16,8 +16,16 @@ RUN R -e "install.packages('rmarkdown', dependencies=TRUE, repos='http://cran.rs
 RUN R -e "install.packages('languageserver', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 RUN R -e "install.packages('ftsa', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 RUN R -e "install.packages('vscDebugger', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('hts', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+
 #RUN R -e "install.packages('IRkernel', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 #RUN R -e "IRkernel::installspec()"
+
+# Python install
+RUN apt-get install -y python3-pip
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+RUN apt-get install -y python3-pandas
 
 # Defailt directory
 WORKDIR /workspaces
