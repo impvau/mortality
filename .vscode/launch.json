@@ -20,10 +20,17 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Split Datasets",
+            "name": "Pre Process",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/preproc.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Post Process",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/postproc.py",
             "console": "integratedTerminal"
         }
     ]
