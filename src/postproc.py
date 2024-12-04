@@ -83,93 +83,96 @@ y, Age, Year, 1p, 2p, ..., 10p
 This allows to simply sum the 1p column where it exits to produce the average 1p forecast RMSE, etc.
 
 '''
-def post_proc():
 
-    # For each seed executed
-    for seed in seeds:
+for exp in experiments:
 
-        # For exach experiement; male_sm, male, female_sm, female, etc.
-        for data_group in datasets:
+    # subExps are each of the test data splits
+    subExps = get_experiements(exp[0])
 
-            # Get the sample-based format
-            df = pd.read_csv(data_group[0])
+    # Extract common elements from first record
+    dfGround = pd.read_csv(subExps[0]["ground"])
+    seed = subExps[0]["seed"]
+    
+    # Process results of each subexp and integrate against the dfGround
+    for subExp in subExps:
+
+        resDir = subExp["out"]
+
+        # We have to merge the test file with the prediction file
+        # due to the way the CFR splits the outputs
+        testFile = f"{resDir}/{seed}.Test.csv"
+        predFile = f"{resDir}/{seed}.Test.Predict.csv"
+        testDf = pd.read_csv(testFile)
+        predDf = pd.read_csv(predFile).rename(columns={'y': 'yd'})
+
+        # Concatenate the test data and predicted values
+        # now we have all info to lookup dfGround and associate
+        # the particular forecast
+        expDf = pd.concat([testDf, predDf], axis=1)
+
+        # Determine the offset in predictions as for different
+        # datasets the 1-point forecast is a different year as
+        # the range of train and test increments for splits 1 to 10
+        min_year = expDf['year'].min()
+        expDf['offset'] = (expDf['year'] - min_year + 1)
+        
+        # Now we have the following format and can assign values against dfGround
+        # y, Age, Year, yd, offset
+        
+        # Iterate over the results of this subExp to create prediction results
+        for _, row in expDf.iterrows():
+
+            # Extract key info
+            age = row['age']
+            year = row['year']
+            offset = int(row['offset'])
+            predicted_value = row["yd"]
             
-            # Get all the subexperiments for each experiement 
-            # This will be a model that is produced on each train/test split
-            # e.g. for male_sm: [1973-2012, 1973-2013, ..., 1973-2021]
-            resDir = f"{dirOut}/{seed}"
-            subexps = [
-                d
-                for d in os.listdir(resDir)
-                if d.endswith(data_group[1])
-            ]
-            
-            # For each subexperiment
-            for subexp in subexps:
+            # Lookup the ground truth value. This could be raw or smoothed data
+            # We generally only care about the raw data but some experiements compare
+            # training and testing performance just on smoothed data
+            mask = (dfGround['age'] == age) & (dfGround['year'] == year)
+            actual_value = dfGround.loc[mask, 'y'].values[0] if not dfGround.loc[mask, 'y'].empty else None
 
-                # Concatenate the test file and the predicted values
-                subexpResDir = f"{resDir}/{subexp}"
-                subexpResTestFile = f"{subexpResDir}/{seed}.Test.csv"
-                subexpResPredFile = f"{subexpResDir}/{seed}.Test.Predict.csv"
+            # Compute the squared error that is later averaged,
+            # over the number of samples (1/(101*(11-h)))
+            squared_error = (actual_value - predicted_value) ** 2
 
-                # Read the test and prediction files
-                subexpDf = pd.read_csv(subexpResTestFile)
-                predDf = pd.read_csv(subexpResPredFile).rename(columns={'y': 'yd'})  # Rename 'y' to 'yd' in predDf
+            # Locate the record in the ground truth with matching 'Age' and 'Year'
+            mask = (dfGround['age'] == age) & (dfGround['year'] == year)
 
-                # Concatenate the test and predicted values
-                expDf = pd.concat([subexpDf, predDf], axis=1)
+            # We set the predicted value for the ith forecast
+            dfGround.loc[mask, f'{offset}p'] = predicted_value
 
-                # Determine the offset in predictions, i.e. what i'th forecast is this sample?
-                # This allows us to associate the correct column next.
-                min_year = expDf['year'].min()
-                expDf['offset'] = (expDf['year'] - min_year + 1)
+            # We set the squared error we will later turn into RMSE
+            dfGround.loc[mask, f'{offset}se'] = squared_error
 
-                # Now we have the following format and can assign values against df
-                # y, Age, Year, y', offset
+        # Output cumulating file for verbose validation
+        #output_file = f"{subExp['summary']}/summary_at_{min_year}.csv"
+        #dfGround.to_csv(output_file, index=False)
 
-                # Iterate over expDf rows and update df
-                for _, row in expDf.iterrows():
-                    age = row['age']
-                    year = row['year']
-                    offset = int(row['offset'])  # Ensure offset is an integer
-                    predicted_value = row["yd"]  # Assuming the predicted column in expDf is named "yd"
-                    
-                    mask = (df['age'] == age) & (df['year'] == year)
-                    actual_value = df.loc[mask, 'y'].values[0] if not df.loc[mask, 'y'].empty else None
+    # Output interim file for validating
+    output_file = f"{subExp['summary']}/summary.csv"
+    dfGround.to_csv(output_file, index=False)
 
-                    squared_error = (actual_value - predicted_value) ** 2
+    # Compute averages for each step for the paper
+    step_averages = []
+    for h in range(1, fc_points+1):
 
-                    # Locate the row in df with matching 'Age' and 'Year'
-                    mask = (df['age'] == age) & (df['year'] == year)
-                    df.loc[mask, f'{offset}p'] = predicted_value
-                    df.loc[mask, f'{offset}p'] = predicted_value
-                    df.loc[mask, f'{offset}se'] = squared_error
+        se_col = f'{h}se'
+        if se_col in dfGround.columns:
 
-            output_file = f"{resDir}/{data_group[0].replace('data/','').replace('.csv',f'{data_group[1]}.csv')}"
-            df.to_csv(output_file, index=False)
+            # Get rows that have SE errors
+            step_df = dfGround[dfGround[se_col].notna()]
 
-            # Initialize a list to store step averages
-            step_averages = []
+            # Compute the average value for the given step
+            avg_value = math.sqrt((1 / (101 * (fc_points+1 - h))) * step_df[se_col].mean())
 
-            # Compute step-RMSE values for each offset (1 to 10)
-            for h in range(1, 11):  # For each offset
-                se_col = f'{h}se'
+            # Store the result in the step_averages list
+            step_averages.append({'h': h, 'average': avg_value})
 
-                if se_col in df.columns:
-                    # Filter rows with valid values in the {offset}se column
-                    step_df = df[df[se_col].notna()]
+    # Convert step averages to a DataFrame
+    avg_df = pd.DataFrame(step_averages)
 
-                    # Compute the average value for the given step
-                    avg_value = math.sqrt((1 / (101 * (11 - h))) * step_df[se_col].mean())
-
-                    # Store the result in the step_averages list
-                    step_averages.append({'h': h, 'average': avg_value})
-
-            # Convert step averages to a DataFrame
-            avg_df = pd.DataFrame(step_averages)
-
-            # Save only the h and average columns to a file
-            avg_output_file = f"{resDir}/{data_group[0].replace('data/', '').replace('.csv', f'{data_group[1]}_step.csv')}"
-            avg_df.to_csv(avg_output_file, index=False)
-
-post_proc()
+    # Save only the h and average columns to a file
+    avg_df.to_csv(output_file.replace("summary","averages"), index=False)
