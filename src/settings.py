@@ -6,27 +6,19 @@ dirOut = "out"
 
 fc_points = 10
 
-cmd = "src/memetico/bin/main -d 0 -dm stale-ext -dc 5 -dd adp-rnd -f 4 -g 10 -ld 0.2 -ls cnm -mr 0.2 -mt 600 -p 18 -o rmse"
+cmd = "src/memetico/bin/main -d 0 -dm stale-ext -dc 5 -dd adp-mu -f 4 -g 10 -ld 0.2 -ls cnm -mr 0.2 -mt 600 -p 18 -o rmse"
 
 seeds = ["982897"]
 
 
-# Define file paths
-file_paths = [
-    ["data/Japan_National_smooth_male.csv", "data/jp_male_sm_t", "data/jp_male_sm_Te"],
-    ["data/Japan_National_smooth_female.csv", "data/jp_female_sm_t", "data/jp_female_sm_Te"],
-    ["data/Japan_National_male.csv", "data/jp_male_t", "data/jp_male_Te"],
-    ["data/Japan_National_female.csv", "data/jp_female_t", "data/jp_female_Te"]
-]
-
 experiments = [
     # Name              Ground          Data for model
     ["jp_male_Mrr",     "jp_male",      "jp_male"],
-    #["jp_male_Msr",     "jp_male_sm",   "jp_male"],
-    #["jp_male_Mss",     "jp_male_sm",   "jp_male_sm"],
-    #["jp_female_Mrr",   "jp_female",    "jp_female"],
-    #["jp_female_Msr",   "jp_female_sm", "jp_female"],
-    #["jp_female_Mss",   "jp_female_sm", "jp_female_sm"]
+    ["jp_male_Mss",     "jp_male_sm",   "jp_male_sm"],
+    ["jp_male_Msr",     "jp_male_sm",   "jp_male"],
+    ["jp_female_Mrr",   "jp_female",    "jp_female"],
+    ["jp_female_Mss",   "jp_female_sm", "jp_female_sm"],
+    ["jp_female_Msr",   "jp_female_sm", "jp_female"]
 ]
 
 ''' Get source files used in experiements and the pre-processed files '''
@@ -52,7 +44,7 @@ def get_sources():
     return unique_values
 
 ''' Get all experiental configurations '''
-def get_experiements():
+def get_experiements(exp = None):
 
     # We produce an array of all the data configurations that we need evaluate
     # We need to create a model for each differen train/test split, for instance
@@ -71,29 +63,32 @@ def get_experiements():
         for experiment in experiments:
             for point in range(1,fc_points+1):
 
-                datas.append({
+                if exp is None or experiment[0] == exp:
+                    datas.append({
 
-                    "experiment": experiments[0],         
-                    "fc_points": fc_points,
-                    "seed": seed,
-                    "point": point,
+                        "experiment": experiments[0],         
+                        "fc_points": fc_points,
+                        "seed": seed,
+                        "point": point,
 
-                    # Ground truth; this could be the original raw data or data that has been smoothed
-                    # i.e. models can be trained on smooth data but assessed on raw
-                    # or models can be trained on raw and assessed on raw
-                    "ground": f"{dirData}/{experiment[1]}/all.csv",    
+                        # Ground truth; this could be the original raw data or data that has been smoothed
+                        # i.e. models can be trained on smooth data but assessed on raw
+                        # or models can be trained on raw and assessed on raw
+                        "ground": f"{dirData}/{experiment[1]}/all.csv",    
 
-                    "source": f"{dirData}/{experiment[2]}/all.csv",    
+                        "source": f"{dirData}/{experiment[2]}/all.csv",    
 
-                    # File to hold train data for a specific Year split
-                    "train": f"{dirData}/{experiment[2]}/t{point}.csv",  
+                        # File to hold train data for a specific Year split
+                        "train": f"{dirData}/{experiment[2]}/t{point}.csv",  
 
-                    # File to hold test data for a specific Year split  
-                    "test": f"{dirData}/{experiment[2]}/Te{point}.csv",
+                        # File to hold test data for a specific Year split  
+                        "test": f"{dirData}/{experiment[2]}/Te{point}.csv",
 
-                    # Filte to store results in
-                    "out": f"{dirOut}/{seed}/{experiment[0]}/{point}/"
+                        # File to store results in
+                        "out": f"{dirOut}/{seed}/{experiment[0]}/{point}",
 
-                })
+                        "summary": f"{dirOut}/{seed}/{experiment[0]}"
+
+                    })
 
     return datas
