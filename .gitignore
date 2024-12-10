@@ -3,3 +3,7 @@ out/*
 plots/*
 **.RData
 **.pyc
+src/benchmark/cache/*
+src/benchmark/data/*
+**.csv
+**.txt
