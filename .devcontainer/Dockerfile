@@ -4,6 +4,11 @@ FROM nvidia/cuda:12.0.1-devel-ubuntu22.04
 # Set non-interactive mode for APT
 ENV DEBIAN_FRONTEND noninteractive
 
+# Add CRAN repository for the latest R version
+RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common wget && \
+    wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | gpg --dearmor -o /usr/share/keyrings/cran-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/cran-archive-keyring.gpg] https://cloud.r-project.org/bin/linux/ubuntu $(lsb_release -cs)-cran40/" > /etc/apt/sources.list.d/cran-r.list
+
 # Update package manager
 RUN apt-get update
 
@@ -39,6 +44,14 @@ RUN R -e "install.packages('languageserver', dependencies=TRUE, repos='http://cr
 RUN R -e "install.packages('ftsa', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 RUN R -e "install.packages('vscDebugger', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 RUN R -e "install.packages('hts', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('demography', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('StMoMo', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+
+RUN apt-get install -y default-jdk && R CMD javareconf
+
+RUN R -e "install.packages('rJava', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('xlsxjars', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('xlsx', dependencies=TRUE, repos='http://cran.rstudio.com/')"
 
 # Python and Pip setup
 RUN apt-get install -y python3-pip
@@ -48,6 +61,9 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN python3 -m pip install pandas==1.3.5
 RUN python3 -m pip install numpy==1.21.6
 RUN python3 -m pip install finitediff
+
+RUN R -e "install.packages('remotes', dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "remotes::install_github('ManuelHentschel/vscDebugger')"
 
 # Set the default working directory
 WORKDIR /workspaces
