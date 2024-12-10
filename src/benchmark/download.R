@@ -5,7 +5,7 @@ library(demography)
 library(data.table)
 library(dplyr)
 
-dir <- "src/benchmark"
+dir <- "/workspaces/mortality/src/benchmark"
 source(file.path(dir, "settings.R"))
 
 read.jpn <- function(prefecture_index, label, save_path = file.path(dir, "cache")) {
