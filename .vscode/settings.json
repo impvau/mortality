@@ -2,5 +2,6 @@
     "files.associations": {
         "*.rmd": "rmarkdown",
         "*.Rmd": "rmd"
-    }
+    },
+    "r.lsp.promptToInstall": false
 }
