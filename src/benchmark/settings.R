@@ -18,6 +18,9 @@ prefectures_smooth <- paste(prefectures, "_smooth", sep = "")
 # Year range for data processing
 year_range <- 1973:2022
 
+# Age range for data processing
+age_range <- 0:100
+
 model_names <- c("lc_sum", "rh", "apc", "cbd", "m6", "m7", "m8", "plat", 
                  "lca_dt", "lca_dxt", "lca_e0", "lca_none", "fdm", "M_fdm", "pr")
                  
