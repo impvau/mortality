@@ -7,7 +7,7 @@ library(xlsx)
 library(dplyr) 
 library(magrittr)
 
-dir <- "src/benchmark"
+dir <- "/workspaces/mortality/src/benchmark"
 source(file.path(dir, "settings.R"))
 
 # Loop through all prefectures and assign the extracted ages to corresponding variables
@@ -133,25 +133,48 @@ for(ij in 2:num_prefs)
 # # smoothing: weighted penalized regression splines with a monotonic constraint for ages above 65
 # #################################################################################################
 
-output_path <- file.path(dir, file.path("data/Smooth Data/Female Data/Japan_smooth_female.csv"))
-if( file.exists(output_path)) {
-    
-    # Load all smoothed data from existing files
-    for (ij in 1:num_prefs) {
-        # Female data
-        data_female <- read.csv(file.path(dir, paste("data/Smooth Data/Female Data/", prefectures_smooth[ij], "_female.csv", sep = "")), row.names = 1)
-        
-        # Male data
-        data_male <- read.csv(file.path(dir, paste("data/Smooth Data/Male Data/", prefectures_smooth[ij], "_male.csv", sep = "")), row.names = 1)
-        
-        # Total data
-        data_total <- read.csv(file.path(dir, paste("data/Smooth Data/Total Data/", prefectures_smooth[ij], "_total.csv", sep = "")), row.names = 1)
-        
-        # Assign loaded data to the prefectures_smooth object
-        assign(prefectures_smooth[ij], list(rate = list(female = data_female, male = data_male, total = data_total)))
-    }
+output_path <- file.path(dir, "data/Smooth Data/Female Data/Japan_smooth_female.csv")
 
-} else {
+# This does not work. Does not construct the demo object as expected from CSV.
+# I make it look like a duck but no quacking
+#
+# if (file.exists(output_path)) {
+    
+#     library(demography)
+    
+#     # Load all smoothed data from existing files
+#     for (ij in 1:num_prefs) {
+        
+#         # Read smoothed data for female, male, and total
+#         data_female <- read.csv(file.path(dir, paste("data/Smooth Data/Female Data/", prefectures_smooth[ij], "_female.csv", sep = "")), row.names = 1)
+#         data_male <- read.csv(file.path(dir, paste("data/Smooth Data/Male Data/", prefectures_smooth[ij], "_male.csv", sep = "")), row.names = 1)
+#         data_total <- read.csv(file.path(dir, paste("data/Smooth Data/Total Data/", prefectures_smooth[ij], "_total.csv", sep = "")), row.names = 1)
+        
+#         # Extract years and ages
+#         years <- as.numeric(gsub("X", "", colnames(data_female)))
+#         ages <- as.numeric(gsub("A", "", rownames(data_female)))
+        
+#         # Construct mortality object
+#         smoothed_data <- list(
+#             type = "mortality",
+#             label = prefectures_smooth[ij],
+#             year = years,
+#             age = ages,
+#             rate = list(
+#                 female = as.matrix(data_female),
+#                 male = as.matrix(data_male),
+#                 total = as.matrix(data_total)
+#             ),
+#             pop = NULL  # Population data is not part of smoothed files
+#         )
+        
+#         # Add attributes to ensure it behaves like a demogdata object
+#         class(smoothed_data) <- "demogdata"
+        
+#         # Assign the constructed object to the corresponding variable
+#         assign(prefectures_smooth[ij], smoothed_data)
+#     }
+# } else {
 
     for(ij in 1:num_prefs)
     {
@@ -223,4 +246,4 @@ if( file.exists(output_path)) {
         dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
         write.csv(data_total_impute, output_path, row.names = TRUE)
     }
-}
+#}
