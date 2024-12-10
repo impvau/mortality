@@ -13,6 +13,22 @@
             "file": "${workspaceFolder}/src/compute_cfr.R"
         },
         {
+            "type": "R-Debugger",
+            "name": "Point Forecasts",
+            "request": "launch",
+            "debugMode": "file",
+            "workingDirectory": "${workspaceFolder}",
+            "file": "${workspaceFolder}/src/benchmark/point_forecasts.R"
+        },
+        {
+            "type": "R-Debugger",
+            "name": "Yangs Benchmark",
+            "request": "launch",
+            "debugMode": "file",
+            "workingDirectory": "${workspaceFolder}",
+            "file": "${workspaceFolder}/temp/point_forecasts_orig.R"
+        },
+        {
             "name": "Run",
             "type": "debugpy",
             "request": "launch",
