@@ -7,4 +7,4 @@ src/benchmark/cache/*
 src/benchmark/data/*
 **.csv
 **.txt
-**.RData
+**.Rdata
