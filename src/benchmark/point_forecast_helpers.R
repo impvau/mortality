@@ -1,4 +1,7 @@
-
+#######################################
+# Helper functions for forecasting benchmarks
+# - common functions like AIC/BIC, MSE, and processing data
+#######################################
 
 standardise = function(x){(x-min(x))/(max(x)-min(x))}
 
