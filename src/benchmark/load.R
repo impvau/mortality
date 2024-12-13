@@ -10,7 +10,6 @@ library(xlsx)
 library(dplyr) 
 library(magrittr)
 
-dir <- "/workspaces/mortality/src/benchmark"
 state_file <- file.path(dir, "load_state.Rdata")
 
 source(file.path(dir, "settings.R"))
