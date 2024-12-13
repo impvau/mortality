@@ -1,11 +1,13 @@
-##########################
-# Compute point forecasts by gender
-##########################
+#######################################
+# Benchmark all models
+# - common functions like AIC/BIC, MSE, and processing data
+#######################################
 
 require(demography)
 require(StMoMo)
 
 dir <- "/workspaces/mortality/src/benchmark"
+
 source(file.path(dir, "settings.R"))
 source(file.path(dir, "download.R"))
 source(file.path(dir, "load.R"))
@@ -23,6 +25,7 @@ run_forecast_for_gender <- function(gender, data_obj, n_splits, year_range, meth
 
     # Select the forecast function based on the method
     if (method == "lc_sum") forecast_fun <- forecast_lc_sum
+    else if (method == "cfr") forecast_fun <- forecast_cfr
     else if (method == "rh") forecast_fun <- forecast_rh
     else if (method == "apc") forecast_fun <- forecast_apc
     else if (method == "cbd") forecast_fun <- forecast_cbd
@@ -42,8 +45,11 @@ run_forecast_for_gender <- function(gender, data_obj, n_splits, year_range, meth
 
     # Forecast and store results for each split
     for (ik in seq_len(n_splits)) {
+
         start_year <- data_obj$year[1]
         end_year <- data_obj$year[n_year - 11 + ik]
+
+        #cat("ik:", ik, "start_year:", start_year, "end_year:", end_year, "\n")
 
         # Prepare data
         obs <- prepare_data(data_obj, start_year, end_year)
@@ -55,7 +61,6 @@ run_forecast_for_gender <- function(gender, data_obj, n_splits, year_range, meth
         forecast_name <- paste0(gender, "_forecast")
         AIC_name <- paste0("AIC_", gender)
         BIC_name <- paste0("BIC_", gender)
-
         train_res_array[,,ik] <- res[[forecast_name]]
         AIC_vals[ik] <- res[[AIC_name]]
         BIC_vals[ik] <- res[[BIC_name]]
@@ -122,6 +127,7 @@ state_smooth = c("Japan_smooth")
 
 # Japan_fore = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "lc_sum")
 # Japan_fore_lc_sum = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "lc_sum") # OK
+# Japan_fore_cfr = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "cfr")
 # Japan_fore_rh = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "rh") # NOT OK, Doesn't converge, loops forever
 # Japan_fore_apc = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "apc") # OK
 # Japan_fore_cbd = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "cbd") # OK
@@ -140,7 +146,8 @@ state_smooth = c("Japan_smooth")
 library(xtable)
 
 # Define methods
-methods_ok <- c("lc_sum", "apc", "cbd", "m6", "m7", "m8", "plat", "lca_dt", "lca_dxt", "lca_e0", "lca_none")
+methods_ok <- c("lc_sum", "apc", "cbd", "m6", "m7", "m8", "plat", "lca_dt", "lca_dxt", "lca_e0", "lca_none", "cfr")
+#methods_ok <- c("cfr","lc_sum")
 methods_not_ok <- c( "rh", "fdm", "M_fdm", "pr")
 all_methods <- c(methods_ok, methods_not_ok)
 
