@@ -1,5 +1,9 @@
-# File for downloading Japanese mortality data
-# Requires `settings.R` for shared configurations
+###################################
+# Download Japanese mortality data
+# - sources data from ipss.go.jp
+# - Caches if already downloaded (clear cache to force download)
+# - Config values in settings.R
+###################################
 
 library(demography)
 library(data.table)
