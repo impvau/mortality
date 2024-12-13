@@ -1,5 +1,8 @@
 #######################################
-# Japanese subnational mortality rates
+# Load Japanese subnational mortality rates
+# - loads data from download/cache
+# - saves environmented for smoothed data to reduce runtime
+# - performs smoothing, imputation, etc.
 #######################################
 
 library(demography)
@@ -8,66 +11,116 @@ library(dplyr)
 library(magrittr)
 
 dir <- "/workspaces/mortality/src/benchmark"
+state_file <- file.path(dir, "load_state.Rdata")
+
 source(file.path(dir, "settings.R"))
 
-# Loop through all prefectures and assign the extracted ages to corresponding variables
-# e.g. Prefecture "Japan" will be accessible in variable Japan
-for (i in seq_along(prefectures)) {
-    assign(prefectures[i], extract.ages(read.jpn(ind_prefs[i], prefectures[i]), 0:100))
-}
-## check if all prefectures have the same length
-#for(ij in 1:num_prefs)
-#{
-#    print(paste0("Prefecture ", ij))
-#    print(c(head(get(prefectures[ij])$year, 1), tail(get(prefectures[ij])$year, 1)))
-#}
+# Check if the saved state exists
+if (file.exists(state_file)) {
+    # Load the saved state
+    load(state_file)
+    cat("Loaded saved state from", state_file, "\n")
+} else {
 
-# Only consider year_range data
-# Note: Okinawa only covers 1973 to 2022
-for (ij in 1:(num_prefs - 1)) {
-    temp_dat <- get(prefectures[ij])
-    temp_dat_truncated <- extract.years(temp_dat, year_range)
-    assign(prefectures[ij], temp_dat_truncated)
-    rm(temp_dat, temp_dat_truncated)
-}
+    # Loop through all prefectures and assign the extracted ages to corresponding variables
+    # e.g. Prefecture "Japan" will be accessible in variable Japan
+    for (i in seq_along(prefectures)) {
+        assign(prefectures[i], extract.ages(read.jpn(ind_prefs[i], prefectures[i]), 0:100))
+    }
+    ## check if all prefectures have the same length
+    #for(ij in 1:num_prefs)
+    #{
+    #    print(paste0("Prefecture ", ij))
+    #    print(c(head(get(prefectures[ij])$year, 1), tail(get(prefectures[ij])$year, 1)))
+    #}
 
-# ################################
-# # Imputation for missing values
-# ################################
-prefectures_impute_female = paste(prefectures, "_impute_female", sep = "")
-prefectures_impute_male = paste(prefectures, "_impute_male", sep = "")
+    # Only consider year_range data
+    # Note: Okinawa only covers 1973 to 2022
+    for (ij in 1:(num_prefs - 1)) {
+        temp_dat <- get(prefectures[ij])
+        temp_dat_truncated <- extract.years(temp_dat, year_range)
+        assign(prefectures[ij], temp_dat_truncated)
+        rm(temp_dat, temp_dat_truncated)
+    }
 
-for(ij in 1:num_prefs)
-{
-   # female
-   data_female = log(get(prefectures[ij])$rate$female)
-   data_female_impute = apply(ifelse(is.finite(data_female), data_female, NA), 2, na.interp)
-   assign(prefectures_impute_female[[ij]], data_female_impute)
-  
-   # male
-   data_male = log(get(prefectures[ij])$rate$male)
-   data_male_impute = apply(ifelse(is.finite(data_male), data_male, NA), 2, na.interp)
-   assign(prefectures_impute_male[[ij]], data_male_impute)
-}
-# Check
-#for(ij in 1:num_prefs)
-#{
-#    print(sum(is.infinite(get(prefectures_impute_female[[ij]]))))
-#    print(sum(is.infinite(get(prefectures_impute_male[[ij]]))))
-#}
+    # ################################
+    # # Imputation for missing values
+    # ################################
+    prefectures_impute_female = paste(prefectures, "_impute_female", sep = "")
+    prefectures_impute_male = paste(prefectures, "_impute_male", sep = "")
 
-## imputation for missing values using linear interpolation
-# female
-data_female = log(get(prefectures[1])$rate$female)
-data_female_impute = apply(ifelse(is.finite(data_female), data_female, NA), 2, na.interp)
-rownames(data_female_impute) = paste("A", 0:100, sep = "")
-colnames(data_female_impute) = get(prefectures[1])$year 
-output_path <- file.path(dir, "data/Female Data/Japan_female.csv")
-dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
-write.csv(data_female_impute, output_path, row.names = TRUE)
+    for(ij in 1:num_prefs)
+    {
+    # female
+    data_female = log(get(prefectures[ij])$rate$female)
+    data_female_impute = apply(ifelse(is.finite(data_female), data_female, NA), 2, na.interp)
+    assign(prefectures_impute_female[[ij]], data_female_impute)
+    
+    # male
+    data_male = log(get(prefectures[ij])$rate$male)
+    data_male_impute = apply(ifelse(is.finite(data_male), data_male, NA), 2, na.interp)
+    assign(prefectures_impute_male[[ij]], data_male_impute)
+    }
+    # Check
+    #for(ij in 1:num_prefs)
+    #{
+    #    print(sum(is.infinite(get(prefectures_impute_female[[ij]]))))
+    #    print(sum(is.infinite(get(prefectures_impute_male[[ij]]))))
+    #}
 
-for(ij in 2:num_prefs)
-{
+    ## imputation for missing values using linear interpolation
+    # female
+    data_female = log(get(prefectures[1])$rate$female)
+    data_female_impute = apply(ifelse(is.finite(data_female), data_female, NA), 2, na.interp)
+    rownames(data_female_impute) = paste("A", 0:100, sep = "")
+    colnames(data_female_impute) = get(prefectures[1])$year 
+    output_path <- file.path(dir, "data/Female Data/Japan_female.csv")
+    dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
+    write.csv(data_female_impute, output_path, row.names = TRUE)
+
+    for(ij in 2:num_prefs)
+    {
+        data_female = log(get(prefectures[ij])$rate$female)
+        data_female_impute = apply(ifelse(is.finite(data_female), data_female, NA), 2, na.interp)
+        rownames(data_female_impute) = paste("A", 0:100, sep = "")
+        colnames(data_female_impute) = get(prefectures[ij])$year 
+        output_path <- file.path(dir, paste("data/Female Data/", prefectures[ij], "_female.csv", sep = ""))
+        dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
+        write.csv(data_female_impute, output_path, row.names = TRUE)
+    }
+
+    # male
+    data_male = log(get(prefectures[1])$rate$male)
+    data_male_impute = apply(ifelse(is.finite(data_male), data_male, NA), 2, na.interp)
+    rownames(data_male_impute) = paste("A", 0:100, sep = "")
+    colnames(data_male_impute) = get(prefectures[1])$year 
+    output_path <- output_path <- file.path(dir, paste("data/Male Data/Japan_male.csv", sep = ""))
+    dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
+
+    write.csv(data_male_impute, output_path, row.names = TRUE)
+
+    for(ij in 2:num_prefs)
+    {
+    data_male = log(get(prefectures[ij])$rate$male)
+    data_male_impute = apply(ifelse(is.finite(data_male), data_male, NA), 2, na.interp)
+    rownames(data_male_impute) = paste("A", 0:100, sep = "")
+    colnames(data_male_impute) = get(prefectures[ij])$year 
+    output_path <- file.path(dir, paste("data/Male Data/", prefectures[ij], "_male.csv", sep = ""))
+    dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
+    write.csv(data_male_impute, output_path, row.names = TRUE)
+    }
+
+    # total
+    data_total = log(get(prefectures[1])$rate$total)
+    data_total_impute = apply(ifelse(is.finite(data_total), data_total, NA), 2, na.interp)
+    rownames(data_total_impute) = paste("A", 0:100, sep = "")
+    colnames(data_total_impute) = get(prefectures[1])$year 
+    output_path <- file.path(dir, paste("data/Total Data/Japan_total.csv", sep = ""))
+    dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
+    write.csv(data_total_impute, output_path, row.names = TRUE)
+
+    for(ij in 2:num_prefs)
+    {
     data_female = log(get(prefectures[ij])$rate$female)
     data_female_impute = apply(ifelse(is.finite(data_female), data_female, NA), 2, na.interp)
     rownames(data_female_impute) = paste("A", 0:100, sep = "")
@@ -75,106 +128,24 @@ for(ij in 2:num_prefs)
     output_path <- file.path(dir, paste("data/Female Data/", prefectures[ij], "_female.csv", sep = ""))
     dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
     write.csv(data_female_impute, output_path, row.names = TRUE)
-}
+    }
 
-# male
-data_male = log(get(prefectures[1])$rate$male)
-data_male_impute = apply(ifelse(is.finite(data_male), data_male, NA), 2, na.interp)
-rownames(data_male_impute) = paste("A", 0:100, sep = "")
-colnames(data_male_impute) = get(prefectures[1])$year 
-output_path <- output_path <- file.path(dir, paste("data/Male Data/Japan_male.csv", sep = ""))
-dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
+    for(ij in 2:num_prefs)
+    {
+    data_total = log(get(prefectures[ij])$rate$total)
+    data_total_impute = apply(ifelse(is.finite(data_total), data_total, NA), 2, na.interp)
+    rownames(data_total_impute) = paste("A", 0:100, sep = "")
+    colnames(data_total_impute) = get(prefectures[ij])$year 
+    output_path <- file.path(dir, paste("data/Total Data/", prefectures[ij], "_total.csv", sep = ""))
+    dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
+    write.csv(data_total_impute, output_path, row.names = TRUE)
+    }
 
-write.csv(data_male_impute, output_path, row.names = TRUE)
+    # #################################################################################################
+    # # smoothing: weighted penalized regression splines with a monotonic constraint for ages above 65
+    # #################################################################################################
 
-for(ij in 2:num_prefs)
-{
-  data_male = log(get(prefectures[ij])$rate$male)
-  data_male_impute = apply(ifelse(is.finite(data_male), data_male, NA), 2, na.interp)
-  rownames(data_male_impute) = paste("A", 0:100, sep = "")
-  colnames(data_male_impute) = get(prefectures[ij])$year 
-  output_path <- file.path(dir, paste("data/Male Data/", prefectures[ij], "_male.csv", sep = ""))
-  dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
-  write.csv(data_male_impute, output_path, row.names = TRUE)
-}
-
-# total
-data_total = log(get(prefectures[1])$rate$total)
-data_total_impute = apply(ifelse(is.finite(data_total), data_total, NA), 2, na.interp)
-rownames(data_total_impute) = paste("A", 0:100, sep = "")
-colnames(data_total_impute) = get(prefectures[1])$year 
-output_path <- file.path(dir, paste("data/Total Data/Japan_total.csv", sep = ""))
-dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
-write.csv(data_total_impute, output_path, row.names = TRUE)
-
-for(ij in 2:num_prefs)
-{
-  data_female = log(get(prefectures[ij])$rate$female)
-  data_female_impute = apply(ifelse(is.finite(data_female), data_female, NA), 2, na.interp)
-  rownames(data_female_impute) = paste("A", 0:100, sep = "")
-  colnames(data_female_impute) = get(prefectures[ij])$year 
-  output_path <- file.path(dir, paste("data/Female Data/", prefectures[ij], "_female.csv", sep = ""))
-  dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
-  write.csv(data_female_impute, output_path, row.names = TRUE)
-}
-
-for(ij in 2:num_prefs)
-{
-  data_total = log(get(prefectures[ij])$rate$total)
-  data_total_impute = apply(ifelse(is.finite(data_total), data_total, NA), 2, na.interp)
-  rownames(data_total_impute) = paste("A", 0:100, sep = "")
-  colnames(data_total_impute) = get(prefectures[ij])$year 
-  output_path <- file.path(dir, paste("data/Total Data/", prefectures[ij], "_total.csv", sep = ""))
-  dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
-  write.csv(data_total_impute, output_path, row.names = TRUE)
-}
-
-# #################################################################################################
-# # smoothing: weighted penalized regression splines with a monotonic constraint for ages above 65
-# #################################################################################################
-
-output_path <- file.path(dir, "data/Smooth Data/Female Data/Japan_smooth_female.csv")
-
-# This does not work. Does not construct the demo object as expected from CSV.
-# I make it look like a duck but no quacking
-#
-# if (file.exists(output_path)) {
-    
-#     library(demography)
-    
-#     # Load all smoothed data from existing files
-#     for (ij in 1:num_prefs) {
-        
-#         # Read smoothed data for female, male, and total
-#         data_female <- read.csv(file.path(dir, paste("data/Smooth Data/Female Data/", prefectures_smooth[ij], "_female.csv", sep = "")), row.names = 1)
-#         data_male <- read.csv(file.path(dir, paste("data/Smooth Data/Male Data/", prefectures_smooth[ij], "_male.csv", sep = "")), row.names = 1)
-#         data_total <- read.csv(file.path(dir, paste("data/Smooth Data/Total Data/", prefectures_smooth[ij], "_total.csv", sep = "")), row.names = 1)
-        
-#         # Extract years and ages
-#         years <- as.numeric(gsub("X", "", colnames(data_female)))
-#         ages <- as.numeric(gsub("A", "", rownames(data_female)))
-        
-#         # Construct mortality object
-#         smoothed_data <- list(
-#             type = "mortality",
-#             label = prefectures_smooth[ij],
-#             year = years,
-#             age = ages,
-#             rate = list(
-#                 female = as.matrix(data_female),
-#                 male = as.matrix(data_male),
-#                 total = as.matrix(data_total)
-#             ),
-#             pop = NULL  # Population data is not part of smoothed files
-#         )
-        
-#         # Add attributes to ensure it behaves like a demogdata object
-#         class(smoothed_data) <- "demogdata"
-        
-#         # Assign the constructed object to the corresponding variable
-#         assign(prefectures_smooth[ij], smoothed_data)
-#     }
-# } else {
+    output_path <- file.path(dir, "data/Smooth Data/Female Data/Japan_smooth_female.csv")
 
     for(ij in 1:num_prefs)
     {
@@ -246,4 +217,8 @@ output_path <- file.path(dir, "data/Smooth Data/Female Data/Japan_smooth_female.
         dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
         write.csv(data_total_impute, output_path, row.names = TRUE)
     }
-#}
+
+    # Save the state for future use
+    save(list = ls(), file = state_file)
+    cat("Processed and saved state to", state_file, "\n")
+}
