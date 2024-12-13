@@ -1,5 +1,0 @@
-
-library(quantmod)
-library(zoo)
-library(hts)
-load("data/27_Nov.RData")
