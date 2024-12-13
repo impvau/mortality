@@ -1,3 +1,7 @@
+#######################################
+# Forecast models
+# - implementation of all forecasting models
+#######################################
 
 forecast_lc_sum <- function(obs) {
     wxt <- genWeightMat(ages = 0:100, years = obs$year, clip = 3)
@@ -472,5 +476,59 @@ forecast_pr <- function(obs) {
         BIC_female = BIC_female,
         AIC_male = AIC_male,
         BIC_male = BIC_male
+    )
+}
+
+forecast_cfr <- function(obs) {
+    seed <- 982897
+    testPoints <- 11 - (2022 - tail(obs$year, 1))
+
+    femaleDir <- paste0('/workspaces/mortality/out/', seed, '/jp_female_Mrr/', testPoints, '/')
+    maleDir <- paste0('/workspaces/mortality/out/', seed, '/jp_male_Mrr/', testPoints, '/')
+
+    processData <- function(dir) {
+        testFile <- paste0(dir, seed, ".Test.csv")
+        trainFile <- paste0(dir, seed, ".Test.Predict.csv")
+        
+        testData <- read.csv(testFile)
+        predictData <- read.csv(trainFile)
+        
+        testDataWithoutY <- testData[, !names(testData) %in% "y"]
+        combinedArray <- cbind(testDataWithoutY, y = predictData$y)
+        
+        reshapedData <- dcast(combinedArray, age ~ year, value.var = "y")
+        rownames(reshapedData) <- reshapedData$age
+        reshapedData <- reshapedData[, -1]
+
+        if (is.null(ncol(reshapedData))) {
+            reshapedData <- as.data.frame(reshapedData)  # Convert to data frame
+            colnames(reshapedData) <- unique(combinedArray$year)  # Assign the year as column name
+        }
+
+        numCols <- ncol(reshapedData)
+        if (numCols < 10) {
+            lastYear <- as.numeric(colnames(reshapedData)[numCols])
+            newCols <- matrix(0, nrow = 101, ncol = 10 - numCols)  # Ensure all 101 rows
+            colnames(newCols) <- seq(lastYear + 1, lastYear + (10 - numCols))
+            reshapedData <- cbind(reshapedData, newCols)
+        }
+
+        exp(reshapedData)
+    }
+
+    reshapedFemale <- processData(femaleDir)
+    reshapedMale <- processData(maleDir)
+    
+    # Convert to numeric matrix before returning
+    reshapedFemale <- as.matrix(reshapedFemale)
+    reshapedMale <- as.matrix(reshapedMale)
+    
+    list(
+        female_forecast = reshapedFemale,
+        male_forecast = reshapedMale,
+        AIC_female = 0,
+        BIC_female = 0,
+        AIC_male = 0,
+        BIC_male = 0
     )
 }
