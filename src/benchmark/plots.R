@@ -1,8 +1,7 @@
-
-
-# ########
-# # Plots
-# ########
+#######################################
+# Plots Japanese subnational mortality rates
+# - currently commented as not yet integrated into the code
+#######################################
 
 # #output_path = paste("D:/OneDrive - The University of Newcastle/Data/Japanese Mortality Data/plots/")
 # output_path <- "data/plots/"
