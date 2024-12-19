@@ -16,7 +16,7 @@ source(file.path(dir, "point_forecast_methods.R"))
 
 
 # This helper function does all the work for a single gender and a given method
-run_forecast_for_gender <- function(gender, data_obj, n_splits, year_range, method) {
+run_forecast_for_gender <- function(gender, data_obj, test, n_splits, year_range, method) {
     n_year <- length(year_range)
     last_year <- tail(year_range, 1)
 
@@ -40,8 +40,25 @@ run_forecast_for_gender <- function(gender, data_obj, n_splits, year_range, meth
     else if (method == "fdm") forecast_fun <- forecast_fdm
     else if (method == "M_fdm") forecast_fun <- forecast_M_fdm
     else if (method == "pr") forecast_fun <- forecast_pr
+    else if (method == "thiele") forecast_fun <- forecast_thiele
+    else if (method == "thiele_sm") forecast_fun <- forecast_thiele_sm
     else stop(paste("No forecast function implemented for method:", method))
 
+    # Extract actual values once outside the loop
+    actual_data <- extract.years(test, years = (test$year[n_year-10] + 1):last_year)$rate[[gender]]
+
+    # Create and write the actual data frame once, outside of the loop
+    actual_df <- data.frame(
+        age = rep(0:100, 10),  # Assuming 10 years total for simplicity
+        year = rep((test$year[n_year-10] + 1):last_year, each = 101),
+        actual = as.vector(log(actual_data))
+        #actual_ln = as.vector(log(actual_data))
+    )
+
+    # Add forecast columns
+    for (i in 1:n_splits) {
+        actual_df[[paste0("fc", i)]] <- NA
+    }
 
     # Forecast and store results for each split
     for (ik in seq_len(n_splits)) {
@@ -69,9 +86,29 @@ run_forecast_for_gender <- function(gender, data_obj, n_splits, year_range, meth
     # Compute MSE
     mse_vals <- numeric(n_splits)
     for (ik in seq_len(n_splits)) {
-        actual <- extract.years(data_obj, years = (data_obj$year[n_year-10] + ik):last_year)$rate[[gender]]
+        actual <- extract.years(test, years = (test$year[n_year-10] + ik):last_year)$rate[[gender]]
         mse_vals[ik] <- mse(log(train_res_array[,ik,1:(11-ik)]), log(actual))
+
+        # Determine the number of prediction years for this split
+        num_years <- 11 - ik
+    
+        # Fill the forecast columns diagonally for each year
+        for (year_offset in 0:(num_years - 1)) {
+            column_to_fill <- paste0("fc", year_offset + 1)  # Start from fc1 for each new year
+            column_to_fill_ln <- paste0("fc_ln", year_offset + 1)  # Start from fc1 for each new year
+            if (column_to_fill %in% names(actual_df)) {
+                years_for_this_column <- (test$year[n_year-10] + ik + year_offset)
+                rows_to_fill <- which(actual_df$year == years_for_this_column)
+                actual_df[rows_to_fill, column_to_fill] <- log(train_res_array[,ik,year_offset + 1])
+                #actual_df[rows_to_fill, column_to_fill_ln] <- log(train_res_array[,ik,year_offset + 1])
+            }
+        }
+
+        #write.csv(actual_df, file = paste0("actual_data_", gender, "_", method, ".csv"), row.names = FALSE)
+
     }
+    
+    write.csv(actual_df, file = paste0("actual_data_", gender, "_", method, ".csv"), row.names = FALSE)
 
     # Structure results
     train_mse <- cbind(mse_vals)
@@ -103,10 +140,12 @@ point_forecast <- function(index, state_select, state_select_smooth, output_dir 
     } else {
         data_obj <- get(state_select[index])
     }
+    
+    test <- get(state_select[index])
 
     # Run separately for female and male with the chosen method
-    female_res <- run_forecast_for_gender("female", data_obj, n_splits, year_range, method)
-    male_res   <- run_forecast_for_gender("male", data_obj, n_splits, year_range, method)
+    male_res   <- run_forecast_for_gender("male", data_obj, test, n_splits, year_range, method)
+    female_res <- run_forecast_for_gender("female", data_obj, test, n_splits, year_range, method)
 
     # Combine results into a single return structure
     return(list(
@@ -125,48 +164,21 @@ point_forecast <- function(index, state_select, state_select_smooth, output_dir 
 state = c("Japan")
 state_smooth = c("Japan_smooth")
 
-# Japan_fore = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "lc_sum")
-# Japan_fore_lc_sum = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "lc_sum") # OK
-# Japan_fore_cfr = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "cfr")
-# Japan_fore_rh = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "rh") # NOT OK, Doesn't converge, loops forever
-# Japan_fore_apc = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "apc") # OK
-# Japan_fore_cbd = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "cbd") # OK
-# Japan_fore_m6 = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "m6") # OK
-# Japan_fore_m7 = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "m7") # OK
-# Japan_fore_m8 = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "m8") # OK
-# Japan_fore_plat = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "plat") # 
-# Japan_fore_lca_dt = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "lca_dt") # OK
-# Japan_fore_lca_dxt = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "lca_dxt") # OK
-# Japan_fore_lca_e0 = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "lca_e0") # OK
-# Japan_fore_lca_none = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "lca_none") # OK
-# Japan_fore_fdm = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "fdm") # NOT OK - different number
-# Japan_fore_M_fdm = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "M_fdm") # NOT OK - different number
-# Japan_fore_pr = point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = "pr") # NOT OK - different numbers
-
 library(xtable)
 
 # Define methods
-methods_ok <- c("lc_sum", "apc", "cbd", "m6", "m7", "m8", "plat", "lca_dt", "lca_dxt", "lca_e0", "lca_none", "cfr")
-#methods_ok <- c("cfr","lc_sum")
-methods_not_ok <- c( "rh", "fdm", "M_fdm", "pr")
-all_methods <- c(methods_ok, methods_not_ok)
+all_methods <- c("lc_sum", "rh", "apc", "cbd", "m6", "m7", "m8", "plat", "lca_dt", "lca_dxt", "lca_e0", "lca_none", "fdm", "M_fdm", "pr")
 
 # Initialize lists to store results
 results_female <- list()
 results_male <- list()
 
 # Evaluate point_forecast for OK methods
-for (method in methods_ok) {
+for (method in all_methods) {
     cat("Computing forecast for method:", method, "...\n")
     forecast_result <- point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = method)
     results_female[[method]] <- sqrt(forecast_result$train_female_mse)
     results_male[[method]] <- sqrt(forecast_result$train_male_mse)
-}
-
-# For NOT OK methods, fill with zeros
-for (method in methods_not_ok) {
-  results_female[[method]] <- rep(0, 10)
-  results_male[[method]] <- rep(0, 10)
 }
 
 # Combine results into tables
