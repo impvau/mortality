@@ -164,7 +164,7 @@ if (file.exists(state_file)) {
     all(na_counter_total == 0)
 
     # female
-    data_female = get(prefectures_smooth[1])$rate$female
+    data_female = log(get(prefectures_smooth[1])$rate$female)
     rownames(data_female) = paste("A", 0:100, sep = "")
     colnames(data_female) = get(prefectures_smooth[1])$year 
     output_path <- file.path(dir, paste("data/Smooth Data/Female Data/Japan_smooth_female.csv", sep = ""))
@@ -173,7 +173,7 @@ if (file.exists(state_file)) {
 
     for(ij in 2:num_prefs)
     {
-        data_female = get(prefectures_smooth[ij])$rate$female
+        data_female = log(get(prefectures_smooth[ij])$rate$female)
         rownames(data_female) = paste("A", 0:100, sep = "")
         colnames(data_female) = get(prefectures_smooth[ij])$year 
         output_path <- file.path(dir, paste("data/Smooth Data/Female Data/", prefectures_smooth[ij], "_female.csv", sep = ""))
@@ -182,7 +182,7 @@ if (file.exists(state_file)) {
     }
 
     # male
-    data_male = get(prefectures_smooth[1])$rate$male
+    data_male = log(get(prefectures_smooth[1])$rate$male)
     rownames(data_male) = paste("A", 0:100, sep = "")
     colnames(data_male) = get(prefectures_smooth[1])$year 
     output_path <- file.path(dir, paste("data/Smooth Data/Male Data/Japan_smooth_male.csv", sep = ""))
@@ -191,7 +191,7 @@ if (file.exists(state_file)) {
 
     for(ij in 2:num_prefs)
     {
-        data_male = get(prefectures_smooth[ij])$rate$male
+        data_male = log(get(prefectures_smooth[ij])$rate$male)
         rownames(data_male) = paste("A", 0:100, sep = "")
         colnames(data_male) = get(prefectures_smooth[ij])$year 
         output_path <- file.path(dir, paste("data/Smooth Data/Male Data/", prefectures_smooth[ij], "_male.csv", sep = ""))
@@ -200,7 +200,7 @@ if (file.exists(state_file)) {
     }
 
     # total
-    data_total = get(prefectures_smooth[1])$rate$total
+    data_total = log(get(prefectures_smooth[1])$rate$total)
     rownames(data_total) = paste("A", 0:100, sep = "")
     colnames(data_total) = get(prefectures_smooth[1])$year 
     output_path <- file.path(dir, paste("data/Smooth Data/Total Data/Japan_smooth_total.csv", sep = ""))
@@ -209,7 +209,7 @@ if (file.exists(state_file)) {
 
     for(ij in 2:num_prefs)
     {
-        data_total = get(prefectures_smooth[ij])$rate$total
+        data_total = log(get(prefectures_smooth[ij])$rate$total)
         rownames(data_total) = paste("A", 0:100, sep = "")
         colnames(data_total) = get(prefectures_smooth[ij])$year 
         output_path <- file.path(dir, paste("data/Smooth Data/Total Data/", prefectures_smooth[ij], "_total.csv", sep = ""))
