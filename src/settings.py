@@ -1,23 +1,30 @@
 
-
 dirData = "data"
 dirOrig = f"{dirData}/orig"
 dirOut = "out"
 
 fc_points = 10
 
-cmd = "src/memetico/bin/main -d 0 -dm stale-ext -dc 5 -dd adp-mu -f 4 -g 10 -ld 0.2 -ls cnm -mr 0.2 -mt 600 -p 18 -o rmse"
+cmd = "src/memetico/bin/main -d 0 -dm stale-ext -dc 5 -dd adp-rnd -f 4 -g 200 -ld 0.2 -ls cnm -mr 0.2 -mt 1800 -p 18 -o rmse"
 
-seeds = ["982897"]
+seeds = ["1339061"]
 
+univariate = False
+onlyLastTen = False
+
+initial_train_start = 1973
+if onlyLastTen:
+    initial_train_start = 2002
+initial_train_end = 2012
+initial_test_end = 2022
 
 experiments = [
     # Name              Ground          Data for model
     ["jp_male_Mrr",     "jp_male",      "jp_male"],
-    ["jp_male_Mss",     "jp_male_sm",   "jp_male_sm"],
+    #["jp_male_Mss",     "jp_male_sm",   "jp_male_sm"],
     ["jp_male_Msr",     "jp_male_sm",   "jp_male"],
     ["jp_female_Mrr",   "jp_female",    "jp_female"],
-    ["jp_female_Mss",   "jp_female_sm", "jp_female_sm"],
+    #["jp_female_Mss",   "jp_female_sm", "jp_female_sm"],
     ["jp_female_Msr",   "jp_female_sm", "jp_female"]
 ]
 

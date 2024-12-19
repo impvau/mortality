@@ -27,7 +27,14 @@ def to_samples(source, destination):
     long_df = long_df[['y', 'age', 'year']]
 
     all_samples_df = long_df[(long_df['year'] >= 1973) & (long_df['year'] <= 2022)]
-    all_samples_df.to_csv(destination, index=False)
+
+    # Adjust columns based on 'univariate' flag
+    if univariate:
+        output_df = all_samples_df[['y', 'year']]
+    else:
+        output_df = all_samples_df[['y', 'age', 'year']]
+
+    output_df.to_csv(destination, index=False)
 
 ''' Convert sample to train/test splits '''
 def to_splits(source, fc_points):
@@ -38,7 +45,10 @@ def to_splits(source, fc_points):
     # Create train and test files for each shift
     for shift in range(fc_points):
 
-        train_start = initial_train_start
+        train_start = initial_train_start          # Training data all
+        if onlyLastTen: 
+            train_start = initial_train_start + shift
+
         train_end = initial_train_end + shift
         test_start = train_end + 1
         test_end = initial_test_end
