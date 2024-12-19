@@ -480,19 +480,26 @@ forecast_pr <- function(obs) {
 }
 
 forecast_cfr <- function(obs) {
-    seed <- 982897
+    #seed <- 982897
+    seed <- 1339061
+    
     testPoints <- 11 - (2022 - tail(obs$year, 1))
 
-    femaleDir <- paste0('/workspaces/mortality/out/', seed, '/jp_female_Mrr/', testPoints, '/')
-    maleDir <- paste0('/workspaces/mortality/out/', seed, '/jp_male_Mrr/', testPoints, '/')
+    femaleDir <- paste0('/workspaces/mortality/out/', seed, '.test.last10/jp_female_Mrr/', testPoints, '/')
+    maleDir <- paste0('/workspaces/mortality/out/', seed, '.test.last10/jp_male_Mrr/', testPoints, '/')
 
     processData <- function(dir) {
         testFile <- paste0(dir, seed, ".Test.csv")
-        trainFile <- paste0(dir, seed, ".Test.Predict.csv")
+        predFile <- paste0(dir, seed, ".Test.Predict.csv")
         
         testData <- read.csv(testFile)
-        predictData <- read.csv(trainFile)
+        predictData <- read.csv(predFile)
         
+        if (!"age" %in% names(testData)) {
+            numRows <- nrow(testData)
+            testData$age <- rep(0:100, length.out = numRows)
+        }
+
         testDataWithoutY <- testData[, !names(testData) %in% "y"]
         combinedArray <- cbind(testDataWithoutY, y = predictData$y)
         
@@ -501,8 +508,108 @@ forecast_cfr <- function(obs) {
         reshapedData <- reshapedData[, -1]
 
         if (is.null(ncol(reshapedData))) {
+            reshapedData <- as.data.frame(reshapedData)
+            colnames(reshapedData) <- unique(combinedArray$year)
+        }
+
+        numCols <- ncol(reshapedData)
+        if (numCols < 10) {
+            lastYear <- as.numeric(colnames(reshapedData)[numCols])
+            newCols <- matrix(0, nrow = 101, ncol = 10 - numCols)
+            colnames(newCols) <- seq(lastYear + 1, lastYear + (10 - numCols))
+            reshapedData <- cbind(reshapedData, newCols)
+        }
+
+        exp(reshapedData)
+    }
+
+    reshapedFemale <- processData(femaleDir)
+    reshapedMale <- processData(maleDir)
+    
+    # Convert to numeric matrix before returning
+    reshapedFemale <- as.matrix(reshapedFemale)
+    reshapedMale <- as.matrix(reshapedMale)
+    
+    list(
+        female_forecast = reshapedFemale,
+        male_forecast = reshapedMale,
+        AIC_female = 0,
+        BIC_female = 0,
+        AIC_male = 0,
+        BIC_male = 0
+    )
+}
+
+forecast_thiele <- function(obs) {
+    
+    testPoints <- 11 - (2022 - tail(obs$year, 1))
+
+    femaleDir <- paste0('/workspaces/mortality/src/thiele/raw/jp_female_Mrr/', testPoints, '/')
+    maleDir <- paste0('/workspaces/mortality/src/thiele/raw/jp_male_Mrr/', testPoints, '/')
+
+    processData <- function(dir) {
+        
+        predFile <- paste0(dir, "Test.Predict.csv")
+        predictData <- read.csv(predFile)
+
+        reshapedData <- dcast(predictData, age ~ year, value.var = "y")
+
+        rownames(reshapedData) <- reshapedData$age
+        reshapedData <- reshapedData[, -1]
+
+        if (is.null(ncol(reshapedData))) {
             reshapedData <- as.data.frame(reshapedData)  # Convert to data frame
-            colnames(reshapedData) <- unique(combinedArray$year)  # Assign the year as column name
+            colnames(reshapedData) <- unique(predictData$year)  # Assign the year as column name
+        }
+
+        numCols <- ncol(reshapedData)
+        if (numCols < 10) {
+            lastYear <- as.numeric(colnames(reshapedData)[numCols])
+            newCols <- matrix(0, nrow = 101, ncol = 10 - numCols)  # Ensure all 101 rows
+            colnames(newCols) <- seq(lastYear + 1, lastYear + (10 - numCols))
+            reshapedData <- cbind(reshapedData, newCols)
+        }
+
+        exp(reshapedData)
+    }
+
+    reshapedFemale <- processData(femaleDir)
+    reshapedMale <- processData(maleDir)
+    
+    # Convert to numeric matrix before returning
+    reshapedFemale <- as.matrix(reshapedFemale)
+    reshapedMale <- as.matrix(reshapedMale)
+    
+    list(
+        female_forecast = reshapedFemale,
+        male_forecast = reshapedMale,
+        AIC_female = 0,
+        BIC_female = 0,
+        AIC_male = 0,
+        BIC_male = 0
+    )
+}
+
+forecast_thiele_sm <- function(obs) {
+    
+    testPoints <- 11 - (2022 - tail(obs$year, 1))
+
+    femaleDir <- paste0('/workspaces/mortality/src/thiele/sm/jp_female_Msr/', testPoints, '/')
+    maleDir <- paste0('/workspaces/mortality/src/thiele/sm/jp_male_Msr/', testPoints, '/')
+
+    processData <- function(dir) {
+        
+        predFile <- paste0(dir, "Test.Predict.csv")
+        predictData <- read.csv(predFile)
+
+        reshapedData <- dcast(predictData, age ~ year, value.var = "y")
+
+        rownames(reshapedData) <- reshapedData$age
+        reshapedData <- reshapedData[, -1]
+
+        if (is.null(ncol(reshapedData))) {
+            reshapedData <- as.data.frame(reshapedData)  # Convert to data frame
+            colnames(reshapedData) <- unique(predictData$year)  # Assign the year as column name
         }
 
         numCols <- ncol(reshapedData)
