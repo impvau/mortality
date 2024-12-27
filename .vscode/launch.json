@@ -6,40 +6,40 @@
     "configurations": [
         {
             "type": "R-Debugger",
-            "name": "Debug compute_cfr.R",
+            "name": "Benchmark: Point Forecasts",
             "request": "launch",
             "debugMode": "file",
-            "workingDirectory": "${workspaceFolder}",
-            "file": "${workspaceFolder}/src/compute_cfr.R"
+            "workingDirectory": "${workspaceFolder}/src/benchmark",
+            "file": "${workspaceFolder}/src/benchmark/point_forecast.R"
         },
         {
-            "type": "R-Debugger",
-            "name": "Point Forecasts",
-            "request": "launch",
-            "debugMode": "file",
-            "workingDirectory": "${workspaceFolder}",
-            "file": "${workspaceFolder}/src/benchmark/point_forecast.R"
-        }
-        {
-            "name": "Run",
+            "name": "CFR: Run",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/run.py",
             "console": "integratedTerminal"
         },
         {
-            "name": "Pre Process",
+            "name": "Symbolic Regression: Pre Process",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/preproc.py",
             "console": "integratedTerminal"
-        },
+        }/*,
         {
             "name": "Post Process",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/postproc.py",
             "console": "integratedTerminal"
-        }
+        },
+        {
+            "type": "R-Debugger",
+            "name": "Debug compute_cfr.R",
+            "request": "launch",
+            "debugMode": "file",
+            "workingDirectory": "${workspaceFolder}",
+            "file": "${workspaceFolder}/src/compute_cfr.R"
+        },*/
     ]
 }
