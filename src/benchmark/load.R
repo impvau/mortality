@@ -10,6 +10,9 @@ library(xlsx)
 library(dplyr) 
 library(magrittr)
 
+# Requires execution in source directory or use launch.json in VSC
+dir <- getwd()
+
 state_file <- file.path(dir, "load_state.Rdata")
 
 source(file.path(dir, "settings.R"))
@@ -73,7 +76,7 @@ if (file.exists(state_file)) {
     data_female_impute = apply(ifelse(is.finite(data_female), data_female, NA), 2, na.interp)
     rownames(data_female_impute) = paste("A", 0:100, sep = "")
     colnames(data_female_impute) = get(prefectures[1])$year 
-    output_path <- file.path(dir, "data/Female Data/Japan_female.csv")
+    output_path <- file.path(dir, "data/female/Japan_female.csv")
     dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
     write.csv(data_female_impute, output_path, row.names = TRUE)
 
@@ -83,7 +86,7 @@ if (file.exists(state_file)) {
         data_female_impute = apply(ifelse(is.finite(data_female), data_female, NA), 2, na.interp)
         rownames(data_female_impute) = paste("A", 0:100, sep = "")
         colnames(data_female_impute) = get(prefectures[ij])$year 
-        output_path <- file.path(dir, paste("data/Female Data/", prefectures[ij], "_female.csv", sep = ""))
+        output_path <- file.path(dir, paste("data/female/", prefectures[ij], "_female.csv", sep = ""))
         dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
         write.csv(data_female_impute, output_path, row.names = TRUE)
     }
@@ -93,20 +96,20 @@ if (file.exists(state_file)) {
     data_male_impute = apply(ifelse(is.finite(data_male), data_male, NA), 2, na.interp)
     rownames(data_male_impute) = paste("A", 0:100, sep = "")
     colnames(data_male_impute) = get(prefectures[1])$year 
-    output_path <- output_path <- file.path(dir, paste("data/Male Data/Japan_male.csv", sep = ""))
+    output_path <- output_path <- file.path(dir, paste("data/male/Japan_male.csv", sep = ""))
     dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
 
     write.csv(data_male_impute, output_path, row.names = TRUE)
 
     for(ij in 2:num_prefs)
     {
-    data_male = log(get(prefectures[ij])$rate$male)
-    data_male_impute = apply(ifelse(is.finite(data_male), data_male, NA), 2, na.interp)
-    rownames(data_male_impute) = paste("A", 0:100, sep = "")
-    colnames(data_male_impute) = get(prefectures[ij])$year 
-    output_path <- file.path(dir, paste("data/Male Data/", prefectures[ij], "_male.csv", sep = ""))
-    dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
-    write.csv(data_male_impute, output_path, row.names = TRUE)
+        data_male = log(get(prefectures[ij])$rate$male)
+        data_male_impute = apply(ifelse(is.finite(data_male), data_male, NA), 2, na.interp)
+        rownames(data_male_impute) = paste("A", 0:100, sep = "")
+        colnames(data_male_impute) = get(prefectures[ij])$year 
+        output_path <- file.path(dir, paste("data/male/", prefectures[ij], "_male.csv", sep = ""))
+        dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
+        write.csv(data_male_impute, output_path, row.names = TRUE)
     }
 
     # total
@@ -114,37 +117,37 @@ if (file.exists(state_file)) {
     data_total_impute = apply(ifelse(is.finite(data_total), data_total, NA), 2, na.interp)
     rownames(data_total_impute) = paste("A", 0:100, sep = "")
     colnames(data_total_impute) = get(prefectures[1])$year 
-    output_path <- file.path(dir, paste("data/Total Data/Japan_total.csv", sep = ""))
+    output_path <- file.path(dir, paste("data/total/Japan_total.csv", sep = ""))
     dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
     write.csv(data_total_impute, output_path, row.names = TRUE)
 
     for(ij in 2:num_prefs)
     {
-    data_female = log(get(prefectures[ij])$rate$female)
-    data_female_impute = apply(ifelse(is.finite(data_female), data_female, NA), 2, na.interp)
-    rownames(data_female_impute) = paste("A", 0:100, sep = "")
-    colnames(data_female_impute) = get(prefectures[ij])$year 
-    output_path <- file.path(dir, paste("data/Female Data/", prefectures[ij], "_female.csv", sep = ""))
-    dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
-    write.csv(data_female_impute, output_path, row.names = TRUE)
+        data_female = log(get(prefectures[ij])$rate$female)
+        data_female_impute = apply(ifelse(is.finite(data_female), data_female, NA), 2, na.interp)
+        rownames(data_female_impute) = paste("A", 0:100, sep = "")
+        colnames(data_female_impute) = get(prefectures[ij])$year 
+        output_path <- file.path(dir, paste("data/female/", prefectures[ij], "_female.csv", sep = ""))
+        dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
+        write.csv(data_female_impute, output_path, row.names = TRUE)
     }
 
     for(ij in 2:num_prefs)
     {
-    data_total = log(get(prefectures[ij])$rate$total)
-    data_total_impute = apply(ifelse(is.finite(data_total), data_total, NA), 2, na.interp)
-    rownames(data_total_impute) = paste("A", 0:100, sep = "")
-    colnames(data_total_impute) = get(prefectures[ij])$year 
-    output_path <- file.path(dir, paste("data/Total Data/", prefectures[ij], "_total.csv", sep = ""))
-    dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
-    write.csv(data_total_impute, output_path, row.names = TRUE)
+        data_total = log(get(prefectures[ij])$rate$total)
+        data_total_impute = apply(ifelse(is.finite(data_total), data_total, NA), 2, na.interp)
+        rownames(data_total_impute) = paste("A", 0:100, sep = "")
+        colnames(data_total_impute) = get(prefectures[ij])$year 
+        output_path <- file.path(dir, paste("data/total/", prefectures[ij], "_total.csv", sep = ""))
+        dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
+        write.csv(data_total_impute, output_path, row.names = TRUE)
     }
 
     # #################################################################################################
     # # smoothing: weighted penalized regression splines with a monotonic constraint for ages above 65
     # #################################################################################################
 
-    output_path <- file.path(dir, "data/Smooth Data/Female Data/Japan_smooth_female.csv")
+    output_path <- file.path(dir, "data/female/Japan_smooth_female.csv")
 
     for(ij in 1:num_prefs)
     {
@@ -154,9 +157,9 @@ if (file.exists(state_file)) {
     na_counter_female = na_counter_male = na_counter_total = rep(0, num_prefs)
     for(i in 1:num_prefs)
     {
-    na_counter_female[i] = sum(is.infinite(log(get(prefectures_smooth[i])$rate$female)))
-    na_counter_male[i] = sum(is.infinite(log(get(prefectures_smooth[i])$rate$male)))
-    na_counter_total[i] = sum(is.infinite(log(get(prefectures_smooth[i])$rate$total)))
+        na_counter_female[i] = sum(is.infinite(log(get(prefectures_smooth[i])$rate$female)))
+        na_counter_male[i] = sum(is.infinite(log(get(prefectures_smooth[i])$rate$male)))
+        na_counter_total[i] = sum(is.infinite(log(get(prefectures_smooth[i])$rate$total)))
     }
 
     all(na_counter_female == 0)
@@ -167,7 +170,7 @@ if (file.exists(state_file)) {
     data_female = log(get(prefectures_smooth[1])$rate$female)
     rownames(data_female) = paste("A", 0:100, sep = "")
     colnames(data_female) = get(prefectures_smooth[1])$year 
-    output_path <- file.path(dir, paste("data/Smooth Data/Female Data/Japan_smooth_female.csv", sep = ""))
+    output_path <- file.path(dir, paste("data/female/Japan_smooth_female.csv", sep = ""))
     dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
     write.csv(data_female, output_path, row.names = TRUE)
 
@@ -176,7 +179,7 @@ if (file.exists(state_file)) {
         data_female = log(get(prefectures_smooth[ij])$rate$female)
         rownames(data_female) = paste("A", 0:100, sep = "")
         colnames(data_female) = get(prefectures_smooth[ij])$year 
-        output_path <- file.path(dir, paste("data/Smooth Data/Female Data/", prefectures_smooth[ij], "_female.csv", sep = ""))
+        output_path <- file.path(dir, paste("data/female/", prefectures_smooth[ij], "_female.csv", sep = ""))
         dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
         write.csv(data_female_impute, output_path, row.names = TRUE)
     }
@@ -185,7 +188,7 @@ if (file.exists(state_file)) {
     data_male = log(get(prefectures_smooth[1])$rate$male)
     rownames(data_male) = paste("A", 0:100, sep = "")
     colnames(data_male) = get(prefectures_smooth[1])$year 
-    output_path <- file.path(dir, paste("data/Smooth Data/Male Data/Japan_smooth_male.csv", sep = ""))
+    output_path <- file.path(dir, paste("data/male/Japan_smooth_male.csv", sep = ""))
     dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
     write.csv(data_male, output_path, row.names = TRUE)
 
@@ -194,7 +197,7 @@ if (file.exists(state_file)) {
         data_male = log(get(prefectures_smooth[ij])$rate$male)
         rownames(data_male) = paste("A", 0:100, sep = "")
         colnames(data_male) = get(prefectures_smooth[ij])$year 
-        output_path <- file.path(dir, paste("data/Smooth Data/Male Data/", prefectures_smooth[ij], "_male.csv", sep = ""))
+        output_path <- file.path(dir, paste("data/male/", prefectures_smooth[ij], "_male.csv", sep = ""))
         dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
         write.csv(data_male_impute, output_path, row.names = TRUE)
     }
@@ -203,7 +206,7 @@ if (file.exists(state_file)) {
     data_total = log(get(prefectures_smooth[1])$rate$total)
     rownames(data_total) = paste("A", 0:100, sep = "")
     colnames(data_total) = get(prefectures_smooth[1])$year 
-    output_path <- file.path(dir, paste("data/Smooth Data/Total Data/Japan_smooth_total.csv", sep = ""))
+    output_path <- file.path(dir, paste("data/total/Japan_smooth_total.csv", sep = ""))
     dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
     write.csv(data_total, output_path, row.names = TRUE)
 
@@ -212,7 +215,7 @@ if (file.exists(state_file)) {
         data_total = log(get(prefectures_smooth[ij])$rate$total)
         rownames(data_total) = paste("A", 0:100, sep = "")
         colnames(data_total) = get(prefectures_smooth[ij])$year 
-        output_path <- file.path(dir, paste("data/Smooth Data/Total Data/", prefectures_smooth[ij], "_total.csv", sep = ""))
+        output_path <- file.path(dir, paste("data/total/", prefectures_smooth[ij], "_total.csv", sep = ""))
         dir.create(dirname(output_path), recursive = TRUE, showWarnings = FALSE)
         write.csv(data_total_impute, output_path, row.names = TRUE)
     }
@@ -220,4 +223,5 @@ if (file.exists(state_file)) {
     # Save the state for future use
     save(list = ls(), file = state_file)
     cat("Processed and saved state to", state_file, "\n")
+
 }

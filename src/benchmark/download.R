@@ -1,14 +1,18 @@
-###################################
+######################################################################
+#
 # Download Japanese mortality data
 # - sources data from ipss.go.jp
 # - Caches if already downloaded (clear cache to force download)
 # - Config values in settings.R
-###################################
+#
+######################################################################
 
 library(demography)
 library(data.table)
 library(dplyr)
 
+# Requires execution in source directory or use launch.json in VSC
+dir <- getwd()
 source(file.path(dir, "settings.R"))
 
 read.jpn <- function(prefecture_index, label, save_path = file.path(dir, "cache")) {
