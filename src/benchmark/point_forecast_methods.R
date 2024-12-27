@@ -1,7 +1,14 @@
-#######################################
-# Forecast models
-# - implementation of all forecasting models
-#######################################
+##############################################################################
+#
+# Forecasting model implementations
+#
+# - The StMoMo forecasting models are implemented directly
+# - The Thiele and CFR codes are run external but read-in via their function
+#
+##############################################################################
+
+library(dplyr)
+library(tidyr)
 
 forecast_lc_sum <- function(obs) {
     wxt <- genWeightMat(ages = 0:100, years = obs$year, clip = 3)
@@ -485,31 +492,22 @@ forecast_cfr <- function(obs) {
     
     testPoints <- 11 - (2022 - tail(obs$year, 1))
 
-    femaleDir <- paste0('/workspaces/mortality/out/', seed, '.test.last10/jp_female_Mrr/', testPoints, '/')
-    maleDir <- paste0('/workspaces/mortality/out/', seed, '.test.last10/jp_male_Mrr/', testPoints, '/')
+    femaleDir <- paste0('/workspaces/mortality/src/out/',seed,'/female/Japan/last10/mv/', testPoints, '/')
+    maleDir <- paste0('/workspaces/mortality/src/out/',seed,'/male/Japan/last10/mv/', testPoints, '/')
 
     processData <- function(dir) {
-        testFile <- paste0(dir, seed, ".Test.csv")
+        
         predFile <- paste0(dir, seed, ".Test.Predict.csv")
-        
-        testData <- read.csv(testFile)
         predictData <- read.csv(predFile)
+        predictData <- predictData[, !names(predictData) %in% "y"]
         
-        if (!"age" %in% names(testData)) {
-            numRows <- nrow(testData)
-            testData$age <- rep(0:100, length.out = numRows)
-        }
-
-        testDataWithoutY <- testData[, !names(testData) %in% "y"]
-        combinedArray <- cbind(testDataWithoutY, y = predictData$y)
-        
-        reshapedData <- dcast(combinedArray, age ~ year, value.var = "y")
+        reshapedData <- dcast(predictData, age ~ year, value.var = "yd")
         rownames(reshapedData) <- reshapedData$age
         reshapedData <- reshapedData[, -1]
 
         if (is.null(ncol(reshapedData))) {
             reshapedData <- as.data.frame(reshapedData)
-            colnames(reshapedData) <- unique(combinedArray$year)
+            colnames(reshapedData) <- unique(predictData$year)
         }
 
         numCols <- ncol(reshapedData)
