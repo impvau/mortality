@@ -8,3 +8,4 @@ src/benchmark/data/*
 **.csv
 **.txt
 **.Rdata
+**.log
