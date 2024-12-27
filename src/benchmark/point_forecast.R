@@ -1,22 +1,32 @@
-#######################################
+##############################################################################
+#
 # Benchmark all models
-# - common functions like AIC/BIC, MSE, and processing data
-#######################################
+#
+# - Common functions like AIC/BIC, MSE, and processing data
+# - File must be run from the source directory or the launch.json for
+#   dir <- getwd() to work
+#
+##############################################################################
 
+# Requires execution in source directory or use launch.json in VSC
+dir <- getwd()
+
+# Require 
 require(demography)
 require(StMoMo)
 
-dir <- "/workspaces/mortality/src/benchmark"
-
+# Ensure that we are using common settings, download and load JP data
 source(file.path(dir, "settings.R"))
 source(file.path(dir, "download.R"))
 source(file.path(dir, "load.R"))
+
+# Load helpers like MSE, BIC, AIC etc. and implementation of all fc methods
 source(file.path(dir, "point_forecast_helpers.R"))
 source(file.path(dir, "point_forecast_methods.R"))
 
-
 # This helper function does all the work for a single gender and a given method
 run_forecast_for_gender <- function(gender, data_obj, test, n_splits, year_range, method) {
+
     n_year <- length(year_range)
     last_year <- tail(year_range, 1)
 
@@ -104,11 +114,12 @@ run_forecast_for_gender <- function(gender, data_obj, test, n_splits, year_range
             }
         }
 
-        #write.csv(actual_df, file = paste0("actual_data_", gender, "_", method, ".csv"), row.names = FALSE)
-
     }
-    
-    write.csv(actual_df, file = paste0("actual_data_", gender, "_", method, ".csv"), row.names = FALSE)
+
+    # Output interim calculations for debug
+    debug_dir <- paste0(dir, "/results/debug/")
+    dir.create(debug_dir, recursive = TRUE, showWarnings = FALSE)
+    write.csv(actual_df, file = paste0(debug_dir, "all_predictions_", gender, "_", method, ".csv"), row.names = FALSE)
 
     # Structure results
     train_mse <- cbind(mse_vals)
@@ -130,7 +141,9 @@ run_forecast_for_gender <- function(gender, data_obj, test, n_splits, year_range
     )
 }
 
+# Do forecast for male and female on the smoothed/unsmoothed data as necessary
 point_forecast <- function(index, state_select, state_select_smooth, output_dir = file.path(dir, "results"), method = "lc_sum") {
+
     dir.create(output_dir, showWarnings = FALSE)
     n_splits <- 10
 
@@ -158,30 +171,29 @@ point_forecast <- function(index, state_select, state_select_smooth, output_dir 
         train_female_mse  = female_res$train_mse,
         train_male_mse    = male_res$train_mse
     ))
+
 }
 
 # Example usage
-state = c("Japan")
-state_smooth = c("Japan_smooth")
-
-library(xtable)
+prefecture = c("Japan")
+prefecture_smooth = c("Japan_smooth")
 
 # Define methods
-all_methods <- c("lc_sum", "rh", "apc", "cbd", "m6", "m7", "m8", "plat", "lca_dt", "lca_dxt", "lca_e0", "lca_none", "fdm", "M_fdm", "pr")
+#all_methods <- c("lc_sum", "rh", "apc", "cbd", "m6", "m7", "m8", "plat", "lca_dt", "lca_dxt", "lca_e0", "lca_none", "fdm", "M_fdm", "pr")
+all_methods <- c("lc_sum", "cfr")
 
-# Initialize lists to store results
+# Go through all_methods and store male and female results
 results_female <- list()
 results_male <- list()
-
-# Evaluate point_forecast for OK methods
 for (method in all_methods) {
     cat("Computing forecast for method:", method, "...\n")
-    forecast_result <- point_forecast(index = 1, state_select = state, state_select_smooth = state_smooth, method = method)
+    forecast_result <- point_forecast(index = 1, state_select = prefecture, state_select_smooth = prefecture_smooth, method = method)
     results_female[[method]] <- sqrt(forecast_result$train_female_mse)
     results_male[[method]] <- sqrt(forecast_result$train_male_mse)
 }
 
 # Combine results into tables
+
 Japan_female_rmse_all <- do.call(cbind, results_female)
 rownames(Japan_female_rmse_all) <- 1:10
 Japan_female_rmse_all <- rbind(Japan_female_rmse_all, Mean = colMeans(Japan_female_rmse_all))
@@ -193,5 +205,6 @@ Japan_male_rmse_all <- rbind(Japan_male_rmse_all, Mean = colMeans(Japan_male_rms
 colnames(Japan_male_rmse_all) <- all_methods
 
 # Print tables
+library(xtable)
 print(xtable(Japan_female_rmse_all, digits = 4))
 print(xtable(Japan_male_rmse_all, digits = 4))
